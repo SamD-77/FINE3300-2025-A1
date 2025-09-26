@@ -45,5 +45,74 @@ class MortgagePayment():
         return tuple(payment_amounts)
     
 
-test = MortgagePayment(0.055, 25)
-print(test.payments(100000))
+class ExchangeRates():
+    def __init__(self, file_path):
+        """
+        Initialize with path to the exchange rate file and reads the most recent USD/CAD exchange rate
+        """
+
+        rates_file = open(file_path) # open file
+        rates = rates_file.read() # read file
+
+        # Format to 2D list of lists
+        rates = rates.split("\n") # split into rows
+        rates = [rate.split(",") for rate in rates] # split into columns
+
+        # Set exchange rate
+        # Use last row for most recent rate (-2 because last row is empty)
+        # Find column by getting index for USD/CAD rate from the top row of headers
+        self.exchange_rate = float(rates[-2][rates[0].index("USD/CAD")])
+
+        rates_file.close() # close file
+
+
+    def convert(self, amount, base_currency, target_currency):
+        """
+        Takes the amount and two currencies and coverts from one currency to another using the exchange rates read from the exchange rate file
+        """
+        if base_currency == target_currency: # convert to same currency
+            return amount
+        
+        elif base_currency == "USD" and target_currency == "CAD": # USD to CAD
+            return amount * self.exchange_rate
+        
+        elif base_currency == "CAD" and target_currency == "USD": # CAD to USD
+            return amount / self.exchange_rate
+
+
+
+# ------------------ Part 1: Mortgage Payments ------------------
+# Prompt user to collect relevant data and convert data type from str
+principal_amount = float(input("Enter the principal ($): "))
+interest_rate = float(input("Enter the quoted interest rate % (e.g 4.85): ")) / 100 # convert from percentage to decimal
+amortization_period = int(input("Enter the amortization period in years: "))
+
+# Instantiate object of MortgagePayment
+mortgage = MortgagePayment(interest_rate, amortization_period)
+
+# Format and display output
+payment_amounts = mortgage.payments(principal_amount) # tuple of payment options amounts
+
+labels = ["Monthly", "Semi-monthly", "Bi-weekly", "Weekly", "Rapid Bi-weekly", "Rapid Weekly"]
+
+print("-" * 25) # line break
+
+# Loop through labels list and payment amounts tuple
+for i in range(len(payment_amounts)):
+    print(f"{labels[i]} Payment: ${payment_amounts[i]:.2f}") # print each label and corresponding value rounded 2 decimals
+
+
+
+# ------------------ Part 2: Exchange Rates ------------------
+# Prompt user to input relevant data
+print("\n" * 2) # new lines
+amount = float(input("Enter the amount to convert ($): "))
+from_currency = input("Enter the base currency: ").upper() # input as uppercase
+to_currency = input("Enter the currency you are converting to: ").upper()
+
+# Instantiate exchange rates object with file path
+exchange_rate = ExchangeRates("BankOfCanadaExchangeRates.csv") 
+
+# Output results
+print("-" * 25) # line break
+print(f"${amount:.2f} {from_currency} = ${exchange_rate.convert(amount, from_currency, to_currency):.2f} {to_currency}")
